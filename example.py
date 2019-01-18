@@ -1,12 +1,53 @@
 
-import itertools
 import numpy as np
+    
+# ----------------------------------------------------------------------    
+def get_test_impurity_model(norb=2, ntau=1000, beta=10.0):
 
-from pytriqs.operators import c, c_dag, Operator, dagger
+    """ Function that generates a random impurity model for testing """
 
-from pyed.OperatorUtils import fundamental_operators_from_gf_struct
-from pyed.OperatorUtils import quadratic_matrix_from_operator
-from pyed.OperatorUtils import quartic_tensor_from_operator
+    from pytriqs.operators import c, c_dag, Operator, dagger
+
+    from pyed.OperatorUtils import fundamental_operators_from_gf_struct
+    from pyed.OperatorUtils import symmetrize_quartic_tensor
+    from pyed.OperatorUtils import get_quadratic_operator
+    from pyed.OperatorUtils import operator_from_quartic_tensor
+    
+    orb_idxs = list(np.arange(norb))
+    spin_idxs = ['up', 'do']
+    gf_struct = [ [spin_idx, orb_idxs] for spin_idx in spin_idxs ]
+
+    # -- Random Hamiltonian
+    
+    fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
+
+    N = len(fundamental_operators)
+    t_OO = np.random.random((N, N)) + 1.j * np.random.random((N, N))
+    t_OO = 0.5 * ( t_OO + np.conj(t_OO.T) )
+
+    #print 't_OO.real =\n', t_OO.real
+    #print 't_OO.imag =\n', t_OO.imag
+    
+    U_OOOO = np.random.random((N, N, N, N)) + 1.j * np.random.random((N, N, N, N))
+    U_OOOO = symmetrize_quartic_tensor(U_OOOO, conjugation=True)    
+    
+    #print 'gf_struct =', gf_struct
+    #print 'fundamental_operators = ', fundamental_operators
+
+    H_loc = get_quadratic_operator(t_OO, fundamental_operators) + \
+        operator_from_quartic_tensor(U_OOOO, fundamental_operators)
+
+    #print 'H_loc =', H_loc
+
+    from pytriqs.gf import MeshImTime, BlockGf
+
+    mesh = MeshImTime(beta, 'Fermion', ntau)
+    Delta_tau = BlockGf(mesh=mesh, gf_struct=gf_struct)
+
+    for block_name, delta_tau in Delta_tau:
+        delta_tau.data[:] = -0.5
+
+    return gf_struct, Delta_tau, H_loc
 
 # ----------------------------------------------------------------------    
 def NO_to_Nos(A_NO, spin_first=True):
@@ -25,6 +66,7 @@ def NO_to_Nos(A_NO, spin_first=True):
     N = len(shape)
     norb = shape[-1] / 2
 
+    assert( shape[-1] % 2 == 0 )
     np.testing.assert_array_almost_equal(
         np.array(shape) - shape[-1], np.zeros(N))
     
@@ -74,51 +116,6 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
         g_tosos[:, :, s, :, s] = g_stoo[s]
 
     return g_tosos, beta, ntau
-    
-# ----------------------------------------------------------------------    
-def get_test_impurity_model(norb=2, ntau=1000, beta=10.0):
-
-    """ Function that generates a random impurity model for testing """
-
-    from pyed.OperatorUtils import symmetrize_quartic_tensor
-    from pyed.OperatorUtils import get_quadratic_operator
-    from pyed.OperatorUtils import operator_from_quartic_tensor
-    
-    orb_idxs = list(np.arange(norb))
-    spin_idxs = ['up', 'do']
-    gf_struct = [ [spin_idx, orb_idxs] for spin_idx in spin_idxs ]
-
-    # -- Random Hamiltonian
-    
-    fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
-
-    N = len(fundamental_operators)
-    t_OO = np.random.random((N, N)) + 1.j * np.random.random((N, N))
-    t_OO = 0.5 * ( t_OO + np.conj(t_OO.T) )
-
-    #print 't_OO.real =\n', t_OO.real
-    #print 't_OO.imag =\n', t_OO.imag
-    
-    U_OOOO = np.random.random((N, N, N, N)) + 1.j * np.random.random((N, N, N, N))
-    U_OOOO = symmetrize_quartic_tensor(U_OOOO, conjugation=True)    
-    
-    print 'gf_struct =', gf_struct
-    #print 'fundamental_operators = ', fundamental_operators
-
-    H_loc = get_quadratic_operator(t_OO, fundamental_operators) + \
-        operator_from_quartic_tensor(U_OOOO, fundamental_operators)
-
-    #print 'H_loc =', H_loc
-
-    from pytriqs.gf import MeshImTime, BlockGf
-
-    mesh = MeshImTime(beta, 'Fermion', ntau)
-    Delta_tau = BlockGf(mesh=mesh, gf_struct=gf_struct)
-
-    for block_name, delta_tau in Delta_tau:
-        delta_tau.data[:] = -0.5
-
-    return gf_struct, Delta_tau, H_loc
 
 # ----------------------------------------------------------------------    
 if __name__ == '__main__':
@@ -129,6 +126,10 @@ if __name__ == '__main__':
     # -- O : composite spin and orbital index
     # -- s, o : pure spin and orbital indices
     
+    from pyed.OperatorUtils import fundamental_operators_from_gf_struct
+    from pyed.OperatorUtils import quadratic_matrix_from_operator
+    from pyed.OperatorUtils import quartic_tensor_from_operator
+
     fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
     
     t_OO = quadratic_matrix_from_operator(H_loc, fundamental_operators)
