@@ -17,7 +17,9 @@ def NO_to_Nos(A_NO, spin_first=True):
     Default is that the composite index has the spin index as the first 
     (slow) index.
 
-    If spin index is the fastest index set: spin_first=False """
+    If spin index is the fastest index set: spin_first=False 
+
+    Author: Hugo U. R. Strand (2019)"""
     
     shape = A_NO.shape
     N = len(shape)
@@ -51,7 +53,9 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
     Returns: 
     g_tosos : ndarray with the response function data
     beta : inverse temperature
-    ntau : number of tau points (including tau=0 and beta) """
+    ntau : number of tau points (including tau=0 and beta) 
+
+    Author: Hugo U. R. Strand (2019) """
     
     beta = G_tau.mesh.beta
     tau = np.array([ float(t) for t in G_tau.mesh ])
