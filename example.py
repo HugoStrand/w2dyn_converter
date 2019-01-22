@@ -14,16 +14,23 @@ def get_test_impurity_model(norb=2, ntau=1000, beta=10.0):
     from pyed.OperatorUtils import operator_from_quartic_tensor
     
     orb_idxs = list(np.arange(norb))
+    #print "orb_idxs ", orb_idxs 
     spin_idxs = ['up', 'do']
     gf_struct = [ [spin_idx, orb_idxs] for spin_idx in spin_idxs ]
+    #print "gf_struct", gf_struct
 
     # -- Random Hamiltonian
     
     fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
+    #print "fundamental_operators ", fundamental_operators 
 
     N = len(fundamental_operators)
     t_OO = np.random.random((N, N)) + 1.j * np.random.random((N, N))
     t_OO = 0.5 * ( t_OO + np.conj(t_OO.T) )
+
+    #print "N", N
+    #print "t_OO", t_OO.shape
+
 
     #print 't_OO.real =\n', t_OO.real
     #print 't_OO.imag =\n', t_OO.imag
@@ -34,15 +41,20 @@ def get_test_impurity_model(norb=2, ntau=1000, beta=10.0):
     #print 'gf_struct =', gf_struct
     #print 'fundamental_operators = ', fundamental_operators
 
+
     H_loc = get_quadratic_operator(t_OO, fundamental_operators) + \
         operator_from_quartic_tensor(U_OOOO, fundamental_operators)
 
     #print 'H_loc =', H_loc
+    #print "H_loc.type", H_loc.type()
 
     from pytriqs.gf import MeshImTime, BlockGf
 
     mesh = MeshImTime(beta, 'Fermion', ntau)
     Delta_tau = BlockGf(mesh=mesh, gf_struct=gf_struct)
+
+    #print "mesh", mesh
+    #print "Delta_tau", Delta_tau
 
     for block_name, delta_tau in Delta_tau:
         delta_tau.data[:] = -0.5
@@ -98,6 +110,8 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
     ntau : number of tau points (including tau=0 and beta) 
 
     Author: Hugo U. R. Strand (2019) """
+
+    print "G_tau", G_tau
     
     beta = G_tau.mesh.beta
     tau = np.array([ float(t) for t in G_tau.mesh ])
@@ -118,9 +132,11 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
     return g_tosos, beta, ntau
 
 # ----------------------------------------------------------------------    
-if __name__ == '__main__':
+#if __name__ == '__main__':
+def generate_testimpurity_with_triqs(norb, ntau, beta):
 
-    gf_struct, Delta_tau, H_loc = get_test_impurity_model(norb=3, ntau=1000, beta=10.0)
+    #gf_struct, Delta_tau, H_loc = get_test_impurity_model(norb=2, ntau=1000, beta=10.0)
+    gf_struct, Delta_tau, H_loc = get_test_impurity_model(norb, ntau, beta)
 
     # -- Convert the impurity model to ndarrays with W2Dynamics format
     # -- O : composite spin and orbital index
@@ -131,9 +147,12 @@ if __name__ == '__main__':
     from pyed.OperatorUtils import quartic_tensor_from_operator
 
     fundamental_operators = fundamental_operators_from_gf_struct(gf_struct)
+    #print "fundamental_operators ", fundamental_operators 
     
     t_OO = quadratic_matrix_from_operator(H_loc, fundamental_operators)
     U_OOOO = quartic_tensor_from_operator(H_loc, fundamental_operators, perm_sym=True)
+
+    #print "t_OO", t_OO
 
     # -- Reshape tensors by breaking out the spin index separately
     
@@ -144,8 +163,10 @@ if __name__ == '__main__':
     
     delta_tosos, beta, ntau = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(Delta_tau)
 
-    print 'beta =', beta
-    print 'ntau =', ntau
-    print 't_osos.shape =', t_osos.shape
-    print 'U_osososos.shape =', U_osososos.shape
-    print 'delta_tosos.shape =', delta_tosos.shape
+    #print 'beta =', beta
+    #print 'ntau =', ntau
+    #print 't_osos.shape =', t_osos.shape
+    #print 'U_osososos.shape =', U_osososos.shape
+    #print 'delta_tosos.shape =', delta_tosos.shape
+
+    return norb, beta, ntau, t_osos, U_OOOO, delta_tosos
