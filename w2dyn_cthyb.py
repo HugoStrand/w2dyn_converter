@@ -1,11 +1,6 @@
 import numpy as np
 import os, sys
 
-### add main directory of w2dyn installation
-#home = os.path.expanduser("~")
-#auxdir=home+"/w2dynamics_github"
-#sys.path.insert(0,auxdir)
-
 import auxiliaries.CTQMC
 
 ### here come the necessary imports form w2dyn dmft loop
@@ -16,7 +11,7 @@ class Solver():
     
     def __init__(self, beta, gf_struct, n_iw=1025, n_tau=10001, n_l=30):
 
-        print "init!"
+        #print "init!"
 
         self.beta = beta
         self.gf_struct= gf_struct
@@ -39,14 +34,14 @@ class Solver():
                 params_kw[depr_params[key]] = val
 
         #n_cycles = params_kw.pop("n_cycles", True)
-        print "params_kw", params_kw
+        #print "params_kw", params_kw
         self.n_cycles = params_kw.pop("n_cycles")  ### what does the True or False mean?
         self.measure_G_l = params_kw.pop("measure_G_l")
         self.n_warmup_cycles = params_kw.pop("n_warmup_cycles")
         self.length_cycle = params_kw.pop("length_cycle")
         self.h_int = params_kw.pop("h_int")
         
-        print "self.h_int", self.h_int
+        #print "self.h_int", self.h_int
 
         #### load stuff from pyed
         from pyed.OperatorUtils import fundamental_operators_from_gf_struct
@@ -61,21 +56,21 @@ class Solver():
         ### I now also generate the fundamental operators out of gf_struct and save them
         from pyed.OperatorUtils import fundamental_operators_from_gf_struct
         fundamental_operators = fundamental_operators_from_gf_struct(self.gf_struct)
-        print "fundamental_operators ", fundamental_operators 
+        #print "fundamental_operators ", fundamental_operators 
 
         ### extract t_ij and U_ijkl from gf_struct
-        print "extract t_ij and U_ijkl from gf_struct... "
+        #print "extract t_ij and U_ijkl from gf_struct... "
         t_OO = quadratic_matrix_from_operator(self.h_int, fundamental_operators)
         U_OOOO = quartic_tensor_from_operator(self.h_int, fundamental_operators, perm_sym=False)
-        print "done!"
+        #print "done!"
 
-        print "t_OO", t_OO
-        print "U_0000", U_OOOO
+        #print "t_OO", t_OO
+        #print "U_0000", U_OOOO
 
         ### transform t_ij from (f,f) to (o,s,o,s) format
         from example import NO_to_Nos
         t_osos = NO_to_Nos(t_OO, spin_first=True)
-        print "t_osos.shape", t_osos.shape
+        #print "t_osos.shape", t_osos.shape
         norb = t_osos.shape[0]
 
         ### TODO: triqs solver takes G0 and converts it into F(iw) and F(tau)
@@ -87,7 +82,7 @@ class Solver():
         _, Delta_tau, __ = get_test_impurity_model(norb, self.n_tau, self.beta)
         ftau, _, __ = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(Delta_tau)
 
-        print "ftau.shape", ftau.shape
+        #print "ftau.shape", ftau.shape
 
         #exit(-1)
 
