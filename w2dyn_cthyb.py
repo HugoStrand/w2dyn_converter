@@ -75,5 +75,70 @@ class Solver():
         ### transform t_ij from (f,f) to (o,s,o,s) format
         from example import NO_to_Nos
         t_osos = NO_to_Nos(t_OO, spin_first=True)
+        print "t_osos.shape", t_osos.shape
+        norb = t_osos.shape[0]
+
+        ### TODO: triqs solver takes G0 and converts it into F(iw) and F(tau)
+        ### but we directly need F(tau)
+
+        from example import get_test_impurity_model
+        from example import triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau
+
+        _, Delta_tau, __ = get_test_impurity_model(norb, self.n_tau, self.beta)
+        ftau, _, __ = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(Delta_tau)
+
+        print "ftau.shape", ftau.shape
+
+        #exit(-1)
+
 
         ### now comes w2dyn!
+        import dmft.impurity as impurity
+        import auxiliaries.config as config
+
+        ### read w2dyn parameter file; later we will replace this by a 
+        ### converter of triqs-parameters to w2dyn-parameters
+        cfg_file_name="Parameters.in"
+        key_value_args={}
+        cfg =  config.get_cfg(cfg_file_name, key_value_args, err=sys.stderr)
+
+        #print "cfg", cfg
+        #exit(-1)
+
+        ### initialize the solver; it needs the config-string
+        Nseed = 1
+        use_mpi = False
+        mpi_comm = None
+        solver = impurity.CtHybSolver(cfg, Nseed, 0,0,0, not use_mpi, mpi_comm)
+
+        ### generate dummy input that we don't necessarily need
+        niw     = 2*cfg["QMC"]["Niw"]
+        g0inviw = np.zeros(shape=(self.n_iw, norb, 2, norb, 2))
+        fiw     = np.zeros(shape=(self.n_iw, norb, 2, norb, 2))
+        fmom    = np.zeros(shape=(2, norb, 2, norb, 2))
+        symmetry_moves = ()
+        paramag = False
+        atom = config.atomlist_from_cfg(cfg, norb)[0]
+
+        ### we begin with real not complex calculations
+        g0inviw = np.real(g0inviw)
+        fiw = np.real(fiw)
+        fmom = np.real(fmom)
+        ftau = np.real(ftau)
+        muimp = np.real(t_osos)
+
+        ### here the properties of the impurity will be defined
+        imp_problem = impurity.ImpurityProblem(
+                        self.beta, g0inviw, fiw, fmom, ftau,
+                        muimp, atom.dd_int, None, None, symmetry_moves,
+                        paramag)
+
+        print " "
+        print "...................................................."
+        ### feed impurity problem into solver
+        solver.set_problem(imp_problem)
+
+        ### solve impurity problem 
+        mccfgcontainer = []
+        iter_no = 1
+        result = solver.solve(iter_no, mccfgcontainer)

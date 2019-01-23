@@ -19,7 +19,7 @@ cfg_file_name="Parameters.in"
 key_value_args={}
 cfg =  config.get_cfg(cfg_file_name, key_value_args, err=sys.stderr)
 
-print "cfg", cfg
+#print "cfg", cfg
 #exit(-1)
 
 ### initialize the solver; it needs the config-string
