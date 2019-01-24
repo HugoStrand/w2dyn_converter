@@ -71,7 +71,7 @@ class Solver():
         #print "done!"
 
         #print "t_OO", t_OO
-        #print "U_0000", U_OOOO
+        #print "U_OOOO", U_OOOO
 
         ### transform t_ij from (f,f) to (o,s,o,s) format
         from example import NO_to_Nos
@@ -145,6 +145,7 @@ class Solver():
         fmom = np.real(fmom)
         ftau = np.real(ftau)
         muimp = np.real(t_osos)
+        U_OOOO = np.real(U_OOOO)
 
         #print "ftau.shape", ftau.shape
         #print "ftau", ftau
@@ -159,6 +160,11 @@ class Solver():
         print "...................................................."
         ### feed impurity problem into solver
         solver.set_problem(imp_problem)
+
+        ### overwrite dummy umatrix in solver class
+        #print "solver.umatrix.shape", solver.umatrix.shape
+        #print "U_OOOO.shape", U_OOOO.shape
+        solver.umatrix = U_OOOO
 
         ### solve impurity problem 
         mccfgcontainer = []
@@ -181,4 +187,5 @@ class Solver():
     
         for spin, (name, g_tau) in enumerate(self.G_tau):
 
-            g_tau.data[:] = np.transpose(gtau[:, spin, :, spin, :], (2, 0, 1)) 
+            ### in w2dyn the diagonal of the GF is positive
+            g_tau.data[:] = -np.transpose(gtau[:, spin, :, spin, :], (2, 0, 1)) 
