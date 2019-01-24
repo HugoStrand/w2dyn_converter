@@ -149,6 +149,9 @@ class Solver():
 
         #print "ftau.shape", ftau.shape
         #print "ftau", ftau
+        ### I save it to compare with w2dyn-dmft tools
+        np.savetxt("ftau_00.dat",ftau[:,0,0,0,0])
+        np.savetxt("ftau_11.dat",ftau[:,0,1,0,1])
 
         ### here the properties of the impurity will be defined
         imp_problem = impurity.ImpurityProblem(
