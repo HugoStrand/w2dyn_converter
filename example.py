@@ -111,8 +111,6 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
 
     Author: Hugo U. R. Strand (2019) """
 
-    print "G_tau", G_tau
-    
     beta = G_tau.mesh.beta
     tau = np.array([ float(t) for t in G_tau.mesh ])
     ntau = len(tau)

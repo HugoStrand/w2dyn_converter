@@ -4,8 +4,8 @@ from pytriqs.archive import HDFArchive
 import pytriqs.utility.mpi as mpi
 import numpy as np
 
-#w2dyn=False
-w2dyn=True
+w2dyn=False
+#w2dyn=True
 
 ### here comes the solver
 if w2dyn:
@@ -79,15 +79,15 @@ else:
 ### Run the solver. The results will be in S.G_tau, S.G_iw and S.G_l
 if w2dyn:
     S.solve(h_int = U * n('up',0) * n('down',0) + e_f* ( n('up',0) + n('down',0) ),     # Local Hamiltonian + quadratic terms
-            n_cycles  = 10000,                      # Number of QMC cycles
+            n_cycles  = 5000,                      # Number of QMC cycles
             length_cycle = 100,                      # Length of one cycle
-            n_warmup_cycles = 10000,                 # Warmup cycles
+            n_warmup_cycles = 5000,                 # Warmup cycles
             measure_G_l = False)                      # Measure G_l
 else:
     S.solve(h_int = U * n('up',0) * n('down',0) ,     # Local Hamiltonian
-            n_cycles  = 10000,                      # Number of QMC cycles
+            n_cycles  = 5000,                      # Number of QMC cycles
             length_cycle = 100,                      # Length of one cycle
-            n_warmup_cycles = 10000,                 # Warmup cycles
+            n_warmup_cycles = 5000,                 # Warmup cycles
             measure_G_l = False)                      # Measure G_l
 
 ### plot Greens function
