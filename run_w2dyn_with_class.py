@@ -4,8 +4,8 @@ from pytriqs.archive import HDFArchive
 import pytriqs.utility.mpi as mpi
 import numpy as np
 
-#w2dyn=False
-w2dyn=True
+w2dyn=False
+#w2dyn=True
 
 ### here comes the solver
 if w2dyn:
@@ -85,14 +85,16 @@ S.solve(h_int = U * n('up',0) * n('down',0) ,     # Local Hamiltonian
         measure_G_l = False)                      # Measure G_l
 
 ### plot Greens function
-from pytriqs.plot.mpl_interface import oplot, oploti, oplotr, plt
-oplot(S.G_tau)
-plt.show()
+#from pytriqs.plot.mpl_interface import oplot, oploti, oplotr, plt
+#oplot(S.G_tau)
+#plt.show()
 
 ### write stuff to file
 if w2dyn:
    with HDFArchive("aim_solution_w2dyn.h5",'w') as Results:
        Results["G_tau"] = S.G_tau
+       Results["G_iw"] = S.G_iw
 else:
    with HDFArchive("aim_solution_triqs.h5",'w') as Results:
        Results["G_tau"] = S.G_tau
+       Results["G_iw"] = S.G_iw

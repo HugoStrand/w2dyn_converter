@@ -1,4 +1,4 @@
-from pytriqs.gf import MeshImTime, BlockGf
+from pytriqs.gf import MeshImTime,MeshImFreq, BlockGf
 import numpy as np
 import os, sys
 
@@ -176,7 +176,7 @@ class Solver():
 
         gtau = result.other["gtau-full"]
         hist = result.other["hist"]
-        #print "gtau.shape", gtau.shape
+        print "gtau.shape", gtau.shape
 
         print "gtau", gtau
         print "hist", hist
@@ -187,8 +187,24 @@ class Solver():
 
         tau_mesh = MeshImTime(self.beta, 'Fermion', n_tau)
         self.G_tau = BlockGf(mesh=tau_mesh, gf_struct=self.gf_struct)
+
+        giw = result.giw
+        print "giw.shape", giw.shape
+        giw = giw.transpose(1,2,3,4,0)
+        print "giw.shape", giw.shape
+
+        n_iw = giw.shape[-1]/2
+        print "n_iw", n_iw
+
+        iw_mesh = MeshImFreq(self.beta, 'Fermion', n_iw)
+        self.G_iw = BlockGf(mesh=iw_mesh, gf_struct=self.gf_struct)
     
         for spin, (name, g_tau) in enumerate(self.G_tau):
 
             ### in w2dyn the diagonal of the GF is positive
             g_tau.data[:] = -np.transpose(gtau[:, spin, :, spin, :], (2, 0, 1)) 
+
+        for spin, (name, g_iw) in enumerate(self.G_iw):
+
+            ### in w2dyn the diagonal of the GF is positive
+            g_iw.data[:] = np.transpose(giw[:, spin, :, spin, :], (2, 0, 1)) 
