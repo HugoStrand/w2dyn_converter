@@ -70,14 +70,27 @@ class Solver():
         U_OOOO = quartic_tensor_from_operator(self.h_int, fundamental_operators, perm_sym=False)
         #print "done!"
 
-        #print "t_OO", t_OO
-        #print "U_OOOO", U_OOOO
+        ### the U tensor is not correct!
+        print "U_OOOO", U_OOOO
+        for i in range(0,2):
+            for j in range(0,2):
+                for k in range(0,2):
+                    for l in range(0,2):
+                        print i,j,k,l, U_OOOO[i,j,k,l]
+        
+        #exit()
+        U_OOOO[...] = 0.0
+        U_OOOO[0,1,0,1] = 1.0
+        U_OOOO[1,0,1,0] = 1.0
 
         ### transform t_ij from (f,f) to (o,s,o,s) format
         from example import NO_to_Nos
         t_osos = NO_to_Nos(t_OO, spin_first=True)
+        #t_osos *= -1.0
+        print "t_osos", t_osos
         #print "t_osos.shape", t_osos.shape
         norb = t_osos.shape[0]
+
 
         ### TODO: triqs solver takes G0 and converts it into F(iw) and F(tau)
         ### but we directly need F(tau)
@@ -136,7 +149,7 @@ class Solver():
         fiw     = np.zeros(shape=(self.n_iw, norb, 2, norb, 2))
         fmom    = np.zeros(shape=(2, norb, 2, norb, 2))
         symmetry_moves = ()
-        paramag = False
+        paramag = True
         atom = config.atomlist_from_cfg(cfg, norb)[0]
 
         ### we begin with real not complex calculations
@@ -176,10 +189,10 @@ class Solver():
 
         gtau = result.other["gtau-full"]
         hist = result.other["hist"]
-        print "gtau.shape", gtau.shape
+        #print "gtau.shape", gtau.shape
 
-        print "gtau", gtau
-        print "hist", hist
+        #print "gtau", gtau
+        #print "hist", hist
         #exit()
 
         n_tau = gtau.shape[-1]

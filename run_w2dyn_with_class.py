@@ -14,9 +14,9 @@ else:
    from triqs_cthyb import Solver
 
 ### Parameters
-U = 0.0
-beta = 10.0
-e_f = 0
+U = 1.0
+beta = 100.0
+e_f = 0.5
 
 ### a discrete AIM
 e1, e2 = -0.43, 0.134
@@ -27,7 +27,7 @@ V1, V2 = 0.38, 0.38
 S = Solver(beta = beta, gf_struct = [ ['up',[0]], ['down',[0]] ], n_l = 30, n_iw=2000,  n_tau=4002)
 
 ### the hybridistation function in Matsubara
-delta_iw_block = ( V1**2 * inverse( 1.0 * iOmega_n - e1 ) + V2**2 * inverse( 1.0 * iOmega_n - e2 ) )
+delta_iw_block = ( V1**2 * inverse( iOmega_n - e1 ) + V2**2 * inverse( iOmega_n - e2 ) )
 
 if w2dyn:
     ### generate a Delta(tau) for w2dyn
@@ -59,7 +59,7 @@ else:
 
    # Initialize the non-interacting Green's function S.G0_iw
    for name, g0 in S.G0_iw: 
-       g0 << inverse ( iOmega_n - e_f - delta_iw_block )
+       g0 << inverse ( iOmega_n + e_f - delta_iw_block )
        
    #from pytriqs.plot.mpl_interface import oplot, oploti, oplotr, plt
    #oplot(S.G0_iw)
@@ -77,12 +77,18 @@ else:
     
 
 ### Run the solver. The results will be in S.G_tau, S.G_iw and S.G_l
-#S.solve(h_int = U * n('up',0) * n('down',0) + e_f* ( n('up',0) + n('down',0) ),     # Local Hamiltonian + quadratic terms
-S.solve(h_int = U * n('up',0) * n('down',0) ,     # Local Hamiltonian
-        n_cycles  = 10000,                      # Number of QMC cycles
-        length_cycle = 100,                      # Length of one cycle
-        n_warmup_cycles = 10000,                 # Warmup cycles
-        measure_G_l = False)                      # Measure G_l
+if w2dyn:
+    S.solve(h_int = U * n('up',0) * n('down',0) + e_f* ( n('up',0) + n('down',0) ),     # Local Hamiltonian + quadratic terms
+            n_cycles  = 10000,                      # Number of QMC cycles
+            length_cycle = 100,                      # Length of one cycle
+            n_warmup_cycles = 10000,                 # Warmup cycles
+            measure_G_l = False)                      # Measure G_l
+else:
+    S.solve(h_int = U * n('up',0) * n('down',0) ,     # Local Hamiltonian
+            n_cycles  = 10000,                      # Number of QMC cycles
+            length_cycle = 100,                      # Length of one cycle
+            n_warmup_cycles = 10000,                 # Warmup cycles
+            measure_G_l = False)                      # Measure G_l
 
 ### plot Greens function
 #from pytriqs.plot.mpl_interface import oplot, oploti, oplotr, plt
