@@ -1,3 +1,4 @@
+from pytriqs.gf import MeshImTime, BlockGf
 import numpy as np
 import os, sys
 
@@ -18,6 +19,11 @@ class Solver():
         self.n_iw = n_iw
         self.n_tau = n_tau
         self.n_l = n_l
+
+        self.tau_mesh = MeshImTime(beta, 'Fermion', n_tau)
+        self.Delta_tau = BlockGf(mesh=self.tau_mesh, gf_struct=gf_struct)
+
+        print "self.tau_mesh", self.tau_mesh
 
     def solve(self, **params_kw):
 
@@ -76,13 +82,14 @@ class Solver():
         ### TODO: triqs solver takes G0 and converts it into F(iw) and F(tau)
         ### but we directly need F(tau)
 
-        from example import get_test_impurity_model
         from example import triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau
 
-        _, Delta_tau, __ = get_test_impurity_model(norb, self.n_tau, self.beta)
-        ftau, _, __ = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(Delta_tau)
+        ftau, _, __ = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(self.Delta_tau)
 
-        #print "ftau.shape", ftau.shape
+        print "ftau.shape", ftau.shape
+        #print "ftau", ftau
+
+        
 
         #exit(-1)
 
@@ -96,6 +103,23 @@ class Solver():
         cfg_file_name="Parameters.in"
         key_value_args={}
         cfg =  config.get_cfg(cfg_file_name, key_value_args, err=sys.stderr)
+        cfg["QMC"]["offdiag"] = 1
+
+        ### I now write the triqs parameters into the cfg file; we may later do this with dictionaries
+        ### in a more sophisticated way
+
+        cfg["General"]["beta"] = self.beta
+        cfg["QMC"]["Niw"] = self.n_iw
+        cfg["QMC"]["Ntau"] = self.n_tau
+        cfg["QMC"]["NLegMax"] = self.n_l
+        cfg["QMC"]["NLegOrder"] = self.n_l
+
+        cfg["QMC"]["Nwarmups"] = self.length_cycle * self.n_warmup_cycles
+        cfg["QMC"]["Nmeas"] = self.n_cycles
+        cfg["QMC"]["Ncorr"] = self.length_cycle
+
+        #for name in cfg["QMC"]:
+            #print name, " = ", cfg["QMC"][name]
 
         #print "cfg", cfg
         #exit(-1)
@@ -122,6 +146,9 @@ class Solver():
         ftau = np.real(ftau)
         muimp = np.real(t_osos)
 
+        #print "ftau.shape", ftau.shape
+        #print "ftau", ftau
+
         ### here the properties of the impurity will be defined
         imp_problem = impurity.ImpurityProblem(
                         self.beta, g0inviw, fiw, fmom, ftau,
@@ -137,3 +164,21 @@ class Solver():
         mccfgcontainer = []
         iter_no = 1
         result = solver.solve(iter_no, mccfgcontainer)
+
+        gtau = result.other["gtau-full"]
+        hist = result.other["hist"]
+        #print "gtau.shape", gtau.shape
+
+        print "gtau", gtau
+        print "hist", hist
+        #exit()
+
+        n_tau = gtau.shape[-1]
+        print "n_tau", n_tau
+
+        tau_mesh = MeshImTime(self.beta, 'Fermion', n_tau)
+        self.G_tau = BlockGf(mesh=tau_mesh, gf_struct=self.gf_struct)
+    
+        for spin, (name, g_tau) in enumerate(self.G_tau):
+
+            g_tau.data[:] = np.transpose(gtau[:, spin, :, spin, :], (2, 0, 1)) 
