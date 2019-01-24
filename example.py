@@ -119,9 +119,64 @@ def triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(G_tau):
 
 # ----------------------------------------------------------------------    
 if __name__ == '__main__':
-
+    
     gf_struct, Delta_tau, H_loc = get_test_impurity_model(norb=3, ntau=1000, beta=10.0)
 
+    beta = Delta_tau.mesh.beta
+    n_iw = 100
+    n_tau = 1000
+    
+    from pytriqs.gf import MeshImFreq, MeshImTime
+    from pytriqs.gf import BlockGf, inverse, iOmega_n, Fourier
+
+    iw_mesh = MeshImFreq(beta, 'Fermion', n_iw)
+    G0_iw = BlockGf(mesh=iw_mesh, gf_struct=gf_struct)
+
+    debug_H = []
+    for block, g0_iw in G0_iw:
+        s = (3, 3)
+        H = np.random.random(s) + 1.j * np.random.random(s)
+        H = H + np.conjugate(H.T)
+
+        g0_iw << inverse( iOmega_n - H - inverse(iOmega_n - 0.3 * H) )
+
+        debug_H.append(H)
+        
+    # ------------------------------------------------------------------
+
+    Delta_iw = BlockGf(mesh=iw_mesh, gf_struct=gf_struct)
+    H_loc_block = []
+    
+    for block, g0_iw in G0_iw:
+
+        tail, err = g0_iw.fit_hermitian_tail()
+        H_loc = tail[2]
+        Delta_iw[block] << inverse(g0_iw) + H_loc - iOmega_n
+
+        H_loc_block.append(H_loc)
+        
+    tau_mesh = MeshImTime(beta, 'Fermion', n_tau)
+    Delta_tau = BlockGf(mesh=tau_mesh, gf_struct=gf_struct)
+    Delta_tau << Fourier(Delta_iw)
+
+    # ------------------------------------------------------------------
+    
+    
+    # ------------------------------------------------------------------
+    exit()
+    
+    from pytriqs.plot.mpl_interface import oplot, oploti, oplotr, plt
+    subp = [3, 1, 1]
+    plt.subplot(*subp); subp[-1] += 1
+    oplot(G0_iw)
+    plt.subplot(*subp); subp[-1] += 1
+    oplot(Delta_iw)
+    plt.subplot(*subp); subp[-1] += 1
+    oplot(Delta_tau)
+    plt.show()
+
+    exit()
+    
     # -- Convert the impurity model to ndarrays with W2Dynamics format
     # -- O : composite spin and orbital index
     # -- s, o : pure spin and orbital indices
