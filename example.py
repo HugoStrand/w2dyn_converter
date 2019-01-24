@@ -146,13 +146,9 @@ def triqs_gf_to_w2dyn_ndarray_g_wosos_beta_niw(G_iw):
     Author: Hugo U. R. Strand (2019) """
 
     beta = G_iw.mesh.beta
-    print "beta", beta
     iw = np.array([ np.real(w) + 1.0j*np.imag(w) for w in G_iw.mesh ])
-    print "iw.shape", iw.shape
     niw = len(iw)
     np.testing.assert_almost_equal(np.imag(iw[niw/2]) * beta, np.pi)
-    #print "iw[0]", iw[0]
-    #print "iw[niw/2]", iw[niw/2]
     
     g_swoo = np.array([ g_iw.data for block_name, g_iw in G_iw ])
     ns, nw, no, nop = g_swoo.shape

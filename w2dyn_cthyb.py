@@ -12,8 +12,6 @@ class Solver():
     
     def __init__(self, beta, gf_struct, n_iw=1025, n_tau=10001, n_l=30):
 
-        #print "init!"
-
         self.beta = beta
         self.gf_struct= gf_struct
         self.n_iw = n_iw
@@ -22,8 +20,6 @@ class Solver():
 
         self.tau_mesh = MeshImTime(beta, 'Fermion', n_tau)
         self.Delta_tau = BlockGf(mesh=self.tau_mesh, gf_struct=gf_struct)
-
-        print "self.tau_mesh", self.tau_mesh
 
     def solve(self, **params_kw):
 
@@ -47,8 +43,6 @@ class Solver():
         self.length_cycle = params_kw.pop("length_cycle")
         self.h_int = params_kw.pop("h_int")
         
-        #print "self.h_int", self.h_int
-
         #### load stuff from pyed
         from pyed.OperatorUtils import fundamental_operators_from_gf_struct
         from pyed.OperatorUtils import quadratic_matrix_from_operator
@@ -68,17 +62,18 @@ class Solver():
         #print "extract t_ij and U_ijkl from gf_struct... "
         t_OO = quadratic_matrix_from_operator(self.h_int, fundamental_operators)
         U_OOOO = quartic_tensor_from_operator(self.h_int, fundamental_operators, perm_sym=False)
-        #print "done!"
 
         ### the U tensor is not correct!
-        print "U_OOOO", U_OOOO
-        for i in range(0,2):
-            for j in range(0,2):
-                for k in range(0,2):
-                    for l in range(0,2):
-                        print i,j,k,l, U_OOOO[i,j,k,l]
+        #print "U_OOOO", U_OOOO
+        #for i in range(0,2):
+            #for j in range(0,2):
+                #for k in range(0,2):
+                    #for l in range(0,2):
+                        #print i,j,k,l, U_OOOO[i,j,k,l]
         
         #exit()
+
+        ### TODO fix generation of U-Matrix; here it is hardcoded for U=1
         U_OOOO[...] = 0.0
         U_OOOO[0,1,0,1] = 1.0
         U_OOOO[1,0,1,0] = 1.0
@@ -87,7 +82,7 @@ class Solver():
         from example import NO_to_Nos
         t_osos = NO_to_Nos(t_OO, spin_first=True)
         #t_osos *= -1.0
-        print "t_osos", t_osos
+        #print "t_osos", t_osos
         #print "t_osos.shape", t_osos.shape
         norb = t_osos.shape[0]
 
@@ -99,7 +94,7 @@ class Solver():
 
         ftau, _, __ = triqs_gf_to_w2dyn_ndarray_g_tosos_beta_ntau(self.Delta_tau)
 
-        print "ftau.shape", ftau.shape
+        #print "ftau.shape", ftau.shape
         #print "ftau", ftau
 
         
@@ -188,26 +183,14 @@ class Solver():
         result = solver.solve(iter_no, mccfgcontainer)
 
         gtau = result.other["gtau-full"]
-        hist = result.other["hist"]
-        #print "gtau.shape", gtau.shape
-
-        #print "gtau", gtau
-        #print "hist", hist
-        #exit()
-
         n_tau = gtau.shape[-1]
-        print "n_tau", n_tau
 
         tau_mesh = MeshImTime(self.beta, 'Fermion', n_tau)
         self.G_tau = BlockGf(mesh=tau_mesh, gf_struct=self.gf_struct)
 
         giw = result.giw
-        print "giw.shape", giw.shape
         giw = giw.transpose(1,2,3,4,0)
-        print "giw.shape", giw.shape
-
         n_iw = giw.shape[-1]/2
-        print "n_iw", n_iw
 
         iw_mesh = MeshImFreq(self.beta, 'Fermion', n_iw)
         self.G_iw = BlockGf(mesh=iw_mesh, gf_struct=self.gf_struct)
